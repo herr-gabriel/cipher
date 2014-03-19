@@ -19,6 +19,7 @@ values = ('base64', 'hex', 'uu', 'quopri', 'rot13', 'none')
 choice = ('yes', 'no')
 
 # Creating loops to let the user choose what encoding method they'd like to use
+# TODO Merge all 4 loops into one loop to optimize
 while stage < 1:
     enc1 = raw_input("Please define encoding 1/4: ")
     if enc1 in values:
@@ -100,6 +101,7 @@ if saltq in choice:
                 print ("Please choose an offset value between 1-32.")
     else:
         salted = pre_salt
+
 # Ask the user wether the file should be saved or not
 confirmed = 0
 while confirmed < 1:
@@ -107,6 +109,8 @@ while confirmed < 1:
     if save_as in choice:
         if save_as == "yes":
             file = 1
+        else:
+			file = 0
     confirmed = 1
 if file == 1:
     save = raw_input("Please choose a filename: ")
