@@ -111,13 +111,13 @@ if saltq in choice:
                 salted = pre_salt
                 value_in_range = 1
                 k5 = eval(repr(bin(salt)))
-                key = k5 + k4 + k3 + k2 + k1
+                key = k5 + ' ' + k4 + ' ' + k3 + ' ' + k2 + ' ' + k1
             else:
                 print ("Your value did not meet the criteria: ") + repr(salt)
                 print ("Please choose an offset value between 1-32.")
     else:
         salted = pre_salt
-        key = k4 + k3 + k2 + k1
+        key = k4 + ' ' + k3 + ' ' + k2 + ' ' + k1
 
 # Ask the user wether the file should be saved or not
 confirmed = 0
