@@ -1,7 +1,7 @@
 cipher
 ======
 
-An encoder and decoder written in Python 3.
+An encoder and decoder written in Python 2.7.
 
 Usage
 ======
