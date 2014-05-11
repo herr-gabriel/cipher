@@ -1,140 +1,196 @@
 #!/usr/bin/python
 
-import sys, string, codecs
+# importing some modules
+import sys
+import argparse
+import os
+import time
+import binascii
+import base64
 
-print ("This is the encoder. To decipher a message, use the provided decoder.")
+# add parsing functionality to provide files
+parser = argparse.ArgumentParser(description="Caesar: a command line key based encryption tool",
+                                 epilog='''This is very basic-level encryption and will probably not keep you safe from
+                                 the NSA or other high-level organizations. Use with caution and common sense.''')
+parser.add_argument("-m", "--mode", dest="mode", help="specify whether encryption, or decryption should be used",
+                    metavar="encrypt|decrypt")
+parser.add_argument("-f", "--file", dest="filename", help="file to be used for encryption",
+                    metavar="filename")
+parser.add_argument("-k", "--key", dest="keyfile", help="keyfile to be used for decryption",
+                    metavar="filename")
+args = parser.parse_args()
 
-# Check if there was a file provided to encode, or if we should await input from the user?
-if len(sys.argv) > 1:
-    string = open(sys.argv[1], 'r').read().decode("utf-8")
-    print ("\n\nUsing file input for encoding.")
-    file = 1
+
+# redefine encoding functions for easier use
+def tobase(n):
+    return base64.encodestring(n)
+
+
+def unbase(n):
+    return base64.decodestring(n)
+
+
+def tohex(n):
+    return binascii.hexlify(n)
+
+
+def unhex(n):
+    return binascii.unhexlify(n)
+
+
+# prints the 1337 intro message
+# bitches love 1337 intro messages
+print(
+    '''\n  ,---. ,--,--. ,---.  ,---.  ,--,--.,--.--.
+ | .--'' ,-.  || .-. :(  .-' ' ,-.  ||  .--'
+ \\ `--.\\ '-'  |\\   --..-'  `)\\ '-'  ||  |
+   `---' `--`--' `----'`----'  `--`--'`--''''')
+print("\n        =========================")
+print("        Key based encryption tool")
+print("        =========================")
+
+
+# function is called, when "encrypt" was passed through args.mode
+def encrypt():
+    # probe whether a file to encrypt was provided or not
+    if args.filename:
+        m = open(args.filename, 'r').read()
+    else:
+        m = raw_input("\nWhat should I encrypt?\n>>> ")
+
+    # assign other variables to be used for encryption
+    k = raw_input("\nWhat should I use as a password?\n>>> ")
+    print ("k " + k)
+    r = len(k)
+    print ("r " + str(r))
+    bm = tohex(m)
+    #bm = m.encode('hex')
+    print("bm " + bm)  # TODO: delete line once code works
+    bk = tohex(k)
+    #bk = k.encode('hex')
+    print("bk " + bk)  # TODO: delete line once code works
+    w = len(bm)
+    print("w " + repr(w))  # TODO: delete line once code works
+    nl = bm[0:0 + w // 2]
+    print("nl " + nl)  # TODO: delete line once code works
+    nr = bm[0 + w // 2:]
+    print("nr " + nr)  # TODO: delete line once code works
+    #test1 = int(bk) ^ int(nl)
+    #test1 = str(test1).encode('base64')
+    #test2 = test1.encode('rot13')
+    #test3 = test2.encode('hex')
+
+    if r > 7:
+        print("\nEncryption might take a while, depending on the length and complexity of the password.\n")
+    if r > 12:
+        r = 12
+    for i in range(r):
+        print("Round " + str(i + 1) + " of " + str(r))
+        # manipulate left split
+        nl = str(int(bk, 16) ^ int(nl, 16))
+        print("xor links " + str(nl))  # TODO: delete line once code works
+        #nl = tohex(tobase(nl).encode('rot13'))
+        #nl = nl.encode('base64').encode('rot13').encode('hex')
+        #print("encode links " + str(nl))  # TODO: delete line once code works
+        # manipulate right split
+        nr = str(int(bk, 16) ^ int(nr, 16))
+        print("xor rechts " + str(nr))  # TODO: delete line once code works
+        #nr = tohex(tobase(nr).encode('rot13'))
+        #nr = nr.encode('base64').encode('rot13').encode('hex')
+        #print("encode rechts " + str(nr))  # TODO: delete line once code works
+
+    print(nl)  # TODO: delete line once code works
+    print(nr)  # TODO: delete line once code works
+    cipher = nl + nr
+    #cipher = cipher.encode('base64')  # TODO: uncomment code once process works
+    bk = bk.encode('base64').encode('rot13').encode('base64')
+
+    # provide different values for enc_filename depending on
+    # whether or not we used a file for encryption
+    if args.filename:
+        enc_filename = os.path.splitext(args.filename)
+        enc_filename = enc_filename[0]
+    else:
+        timefile = time.strftime("%Y%m%d%H%M%S")
+        prefile = "caesar-"
+        enc_filename = prefile + timefile
+    key_filename = enc_filename + "-key.txt"
+    enc_filename += "-encrypted.txt"
+
+    #print >> open("debug", 'w'), test1 + test2 + test3
+    print >> open(enc_filename, 'w'), cipher
+    print >> open(key_filename, 'w'), bk
+    print("\nAll done. Following files were created:")
+    print(enc_filename + ", " + key_filename)
+
+
+# function is called, when "decrypt" was passed through args.mode
+def decrypt():
+    # probe whether a file to decrypt was provided or not
+    if args.filename:
+        cipher = open(args.filename, 'r').read()
+    else:
+        cipher = raw_input("\nWhat should I decrypt?\n>>> ")
+
+    # probe whether a key for decryption was provided or not
+    if args.keyfile:
+        bk = open(args.keyfile, 'r').read()
+    else:
+        bk = raw_input("\nPlease enter the encrypted password.\n>>> ")
+
+    #cipher = cipher.decode('base64')  # TODO: uncomment code once process works
+    bk = bk.decode('base64').decode('rot13').decode('base64')
+    print(bk)  # TODO: delete line once code works
+    r = len(bk.decode('hex'))
+    w = len(cipher)
+    print(w)  # TODO: delete line once code works
+    nl = cipher[0:0 + w // 2]
+    print("nl " + nl)  # TODO: delete line once code works
+    nr = cipher[0 + w // 2:]
+    print("nr " + nr)  # TODO: delete line once code works
+
+    if r > 12:
+        r = 12
+    for i in range(r):
+        print("Round " + str(i + 1) + " of " + str(r))
+        # manipulate left split
+        #nl = nl.decode('hex').decode('rot13').decode('base64')
+        #print("encode links " + nl)  # TODO: delete line once code works
+        nl = str(int(nl) ^ int(bk, 16))
+        print("xor links " + str(nl))  # TODO: delete line once code works
+        # manipulate right split
+        #nr = nr.decode('hex').decode('rot13').decode('base64')
+        #print(" encode rechts" + nr)  # TODO: delete line once code works
+        nr = str(int(nr) ^ int(bk, 16))
+        print("xor rechts " + str(nr))  # TODO: delete line once code works
+
+        nl = nl.decode('hex')
+        print("nl " + nl)  # TODO: delete line once code works
+        nr = nr.decode('hex')
+        print("nr " + nr)  # TODO: delete line once code works
+        clear = nl + nr
+        clear_filename = os.path.split(args.filename)
+        clear_filename = clear_filename
+        print(clear)
+        print(clear_filename)
+
+
+# function is called, when no mode was passed through args.mode
+def nocrypt():
+    print(('\nNo mode selected.\n'
+           'Please specify a mode by using the following:\n'
+           'caesar.py -m [encrypt | decrypt] \n'
+           'Use -h for all available commands.'))
+
+
+# check for what mode was selected
+if args.mode == "encrypt":
+    # use encryption protocol
+    encrypt()
+elif args.mode == "decrypt":
+    # use decryption protocol
+    decrypt()
 else:
-    string = raw_input("\n\nPlease enter the phrase to encode: ")
-
-print ("Use base64, hex, uu, quopri, rot13 or none as encoding types.")
-
-stage = 0
-values = ('base64', 'hex', 'uu', 'quopri', 'rot13', 'none')
-choice = ('yes', 'no')
-matrix = {'10100': 'base64', '10010': 'hex', '10001': 'uu', '01100': 'quopri', '01010': 'rot13', '01001': 'none'}
-
-# Creating loops to let the user choose what encoding method they'd like to use
-# TODO Merge all 4 loops into one loop to optimize
-while stage < 1:
-    enc1 = raw_input("Please define encoding 1/4: ")
-    if enc1 in values:
-	if enc1 != "none":
-	    print ("Encoding selected: ") + enc1
-	    enc1d = string.encode(enc1, 'strict')
-	else:
-	    print ("No algorithm selected in stage 1, skip encoding.")
-	    enc1d = string
-	stage = stage + 1
-	# Generate a Key value (kn) for automated decoding through cleopatra
-	for key, value in matrix.items():
-	    if value == enc1:
-		k1 = key
-    else:
-	print ("I\'m sorry, you entered a wrong value.\nPlease make sure to use the correct value.\n")
-
-while stage < 2:
-    enc2 = raw_input("\n\nPlease define encoding 2/4: ")
-    if enc2 in values:
-        if enc2 != "none":
-            print ("Encoding selected: ") + enc2
-            enc2d = enc1d.encode(enc2, 'strict')
-        else:
-            print ("No algorithm selected in stage 2, skip encoding.")
-            enc2d = enc1d
-        stage = stage + 1
-        for key, value in matrix.items():
-	    if value == enc2:
-		k2 = key
-    else:
-        print ("I\'m sorry, you entered a wrong value.\nPlease make sure to use the correct value.\n")
-
-while stage < 3:
-    enc3 = raw_input("\n\nPlease define encoding 3/4: ")
-    if enc3 in values:
-        if enc3 != "none":
-            print ("Encoding selected: ") + enc3
-            enc3d = enc2d.encode(enc3, 'strict')
-        else:
-            print ("No algorithm selected in stage 3, skip encoding.")
-            enc3d = enc2d
-        stage = stage + 1
-        for key, value in matrix.items():
-	    if value == enc3:
-		k3 = key
-    else:
-        print ("I\'m sorry, you entered a wrong value.\nPlease make sure to use the correct value.\n")
-
-while stage < 4:
-    enc4 = raw_input("\n\nPlease define encoding 4/4: ")
-    if enc4 in values:
-        if enc4 != "none":
-            print ("Encoding selected: ") + enc4
-            enc4d = enc3d.encode(enc4, 'strict')
-        else:
-            print ("No algorithm selected in stage 4, skip encoding.")
-            enc4d = enc3d
-        stage = stage + 1
-        for key, value in matrix.items():
-	    if value == enc4:
-		k4 = key
-    else:
-        print ("I\'m sorry, you entered a wrong value.\nPlease make sure to use the correct value.\n")
-
-# Encode to base64 so we can more easily shift characters, no matter the last encoding chosen by the user
-pre_salt = enc4d.encode('base64', 'strict')
-
-# Last but not least, let's add a little salt to obscure the encoding even further
-# The chosen offset has to be known by the receipient of the message to decode it
-saltq = raw_input("\n\nDo you want to create a character-offset for the message?\n(yes/no): ")
-
-if saltq in choice:
-    if saltq == "yes":
-        value_in_range = 0
-        while value_in_range < 1:
-            salt = int(raw_input("Please provide an offset value (1-32): "))
-            if salt in range(1, 33):
-                print ("\n\nWARNING!\n\nEncoding might take up a lot of resources, if a high offset was chosen.\n\n")
-                # This loop will check if the correct_value is smaller than the value provided in salt
-                # If it is, it will keep using rot13 and then base64 to encode the string until correct_value = salt
-                correct_value = 0
-                while correct_value < salt:
-                    correct_value = correct_value + 1
-                    print ("Crunching... ") + repr(correct_value) + ("/") + repr(salt)
-                    pre_salt = pre_salt.encode('rot13').encode('base64')
-                print ("\n\nAll done!\n\n")
-                salted = pre_salt
-                value_in_range = 1
-                k5 = eval(repr(bin(salt)))
-                key = k5 + ' ' + k4 + ' ' + k3 + ' ' + k2 + ' ' + k1
-            else:
-                print ("Your value did not meet the criteria: ") + repr(salt)
-                print ("Please choose an offset value between 1-32.")
-    else:
-        salted = pre_salt
-        key = k4 + ' ' + k3 + ' ' + k2 + ' ' + k1
-
-# Ask the user wether the file should be saved or not
-confirmed = 0
-
-while confirmed < 1:
-    save_as = raw_input("Do you want to save the message as a file?\n(yes/no): ")
-    if save_as in choice:
-        if save_as == "yes":
-            file = 1
-        else:
-	    file = 0
-    confirmed = 1
-if file == 1:
-    save = raw_input("Please choose a filename: ")
-    savekey = save + '-key'
-    print >> open(save, 'w'), salted
-    print >> open(savekey, 'w'), key
-else:
-    print ("This is your encrypted message:\n\n") + salted
-    print ("This is the key for decryption:\n\n") + key
+    # no mode selected
+    nocrypt()
+sys.exit()
